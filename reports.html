@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Reports – Social Sentiment Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<body class="analysis-page">
+
+    <div class="analysis-header">
+        <h1 class="page-title">Schedule Email Reports</h1>
+    </div>
+
+    <!-- FORM START -->
+    <form action="/schedule-report" method="POST" class="analysis-form">
+
+        <div class="summary-card">
+            <h2 class="section-title">Automated Sentiment Reports</h2>
+
+            <p class="report-description">
+                Receive automated sentiment reports from <strong>Social Sentiment Monitor</strong>
+                directly in your inbox. Reports are generated using real-time sentiment analysis
+                powered by RoBERTa and delivered at <strong>9:30 AM IST</strong>.
+            </p>
+            <p class="monthly-note">
+                Note: Scheduled reports will be generated based on the most recently
+                searched keyword in your session.
+            </p>
+            <!-- ✅ SUCCESS MESSAGE (ADDITION ONLY) -->
+            {% if success_message %}
+            <div class="success-message">
+                {{ success_message }}
+            </div>
+            {% endif %}
+
+            <!-- REQUIRED HIDDEN INPUTS -->
+            <input type="hidden" name="frequency" id="frequency">
+            <input type="hidden" name="day_value" id="day_value">
+
+            <!-- EMAIL INPUT -->
+            <div class="report-form">
+                <input
+                    type="email"
+                    name="email"
+                    class="report-input"
+                    placeholder="Enter your email address"
+                    required
+                >
+            </div>
+
+            <!-- FREQUENCY BUTTONS -->
+            <div class="frequency-buttons">
+                <button type="button" class="freq-btn" onclick="selectFrequency('daily', this)">Daily</button>
+                <button type="button" class="freq-btn" onclick="selectFrequency('weekly', this)">Weekly</button>
+                <button type="button" class="freq-btn" onclick="selectFrequency('monthly', this)">Monthly</button>
+            </div>
+
+            <!-- DAILY -->
+            <div id="daily-box" class="freq-box hidden">
+                <p class="freq-text">
+                    You will receive a daily sentiment report every morning at
+                    <strong>9:30 AM IST</strong>.
+                </p>
+            </div>
+
+            <!-- WEEKLY -->
+            <div id="weekly-box" class="freq-box hidden">
+                <p class="freq-text">Select a day of the week:</p>
+                <select class="report-select" onchange="setDayValue(this.value)">
+                    <option value="">-- Select --</option>
+                    <option>Monday</option>
+                    <option>Tuesday</option>
+                    <option>Wednesday</option>
+                    <option>Thursday</option>
+                    <option>Friday</option>
+                    <option>Saturday</option>
+                    <option>Sunday</option>
+                </select>
+            </div>
+
+            <!-- MONTHLY -->
+            <div id="monthly-box" class="freq-box hidden">
+                <p class="freq-text">Select a date (1–28):</p>
+                <select class="report-select" onchange="setDayValue(this.value)">
+                    <option value="">-- Select --</option>
+                    {% for i in range(1,29) %}
+                        <option>{{ i }}</option>
+                    {% endfor %}
+                </select>
+
+                <p class="monthly-note">
+                    To ensure reliable delivery across all months and avoid date inconsistencies,
+                    monthly reports can be scheduled between the 1st and 28th.
+                    Reports are delivered at 9:30 AM IST.
+                </p>
+
+            </div>
+
+            <!-- SUBMIT -->
+            <div class="submit-wrapper">
+                <button type="submit" class="submit-report">
+                    Schedule Report
+                </button>
+            </div>
+
+        </div>
+
+    </form>
+    <!-- FORM END -->
+
+<script>
+function selectFrequency(type, btn) {
+    document.getElementById("frequency").value = type;
+
+    document.querySelectorAll('.freq-box').forEach(box =>
+        box.classList.add('hidden')
+    );
+    document.getElementById(type + '-box').classList.remove('hidden');
+
+    document.querySelectorAll('.freq-btn').forEach(b =>
+        b.classList.remove('active')
+    );
+
+    btn.classList.add('active');
+
+    // Reset day_value when switching frequency
+    document.getElementById("day_value").value = "";
+}
+
+function setDayValue(val) {
+    document.getElementById("day_value").value = val;
+}
+</script>
+
+</body>
+</html>

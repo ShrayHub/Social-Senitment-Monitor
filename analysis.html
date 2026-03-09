@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis - Social Sentiment Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="https://cdn.anychart.com/releases/8.0.1/js/anychart-core.min.js"></script>
+    <script src="https://cdn.anychart.com/releases/8.0.1/js/anychart-pie.min.js"></script>
+</head>
+<body class="analysis-page">
+    <div class="analysis-header">
+        <h1 class="page-title">Social Sentiment Monitor</h1>
+    </div>
+
+    <form action="/searchTopic" method="POST" class="analysis-form">
+        <div class="search-section">
+            <div class="search-container">
+                <input class="search-input" type="text" id="name" name="name" placeholder="Enter product name or topic...">
+                <input class="search-button" type="submit" value="Analyze Sentiment">
+            </div>
+
+            <div class="search-description">
+                <p>
+                    Our platform collects real-time tweets from X (Twitter) based on your search query. Each tweet is analyzed using a fine-tuned RoBERTa transformer model that understands context, sarcasm, and nuanced language to classify sentiment accurately.
+                </p>
+            </div>
+        </div>
+
+        {% if summary %}
+        <div class="summary-section">
+            <div class="summary-card">
+                <h2 class="section-title">Analysis Summary</h2>
+                <div class="summary-grid">
+                    <div class="summary-stats">
+                        <div class="stat-box">
+                            <p class="stat-label">Search Query</p>
+                            <h3 class="stat-value">{{ summary.query }}</h3>
+                        </div>
+                        <div class="stat-box" id="total-box">
+                            <p class="stat-label">Total Tweets</p>
+                            <h3 class="stat-value">{{ summary.total_tweets }}</h3>
+                        </div>
+                        <div class="stat-box">
+                            <p class="stat-label">Analyzed</p>
+                            <h3 class="stat-value">{{ summary.clear_tweets }}</h3>
+                        </div>
+                        <div class="stat-box" id="filtered-box">
+                            <p class="stat-label">Filtered</p>
+                            <h3 class="stat-value">{{ summary.removed_list }}</h3>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div id="container" class="pie-chart"></div>
+                        <div style="display: none;">
+                            <span id="positive">{{ summary.positive }}</span>
+                            <span id="neutral">{{ summary.neutral }}</span>
+                            <span id="negative">{{ summary.negative }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        anychart.onDocumentReady(function () {
+
+            const positive = Number(document.getElementById("positive").innerText);
+            const neutral  = Number(document.getElementById("neutral").innerText);
+            const negative = Number(document.getElementById("negative").innerText);
+
+            const data = [
+                { x: "POSITIVE", value: positive, fill: "#ff9ecd" },
+                { x: "NEUTRAL",  value: neutral,  fill: "#ffb3d9" },
+                { x: "NEGATIVE", value: negative, fill: "#d4567a" }
+            ];
+
+            const chart = anychart.pie(data);
+            chart.container("container");
+            chart.background().fill("none");
+ 
+
+            chart.listen("pointClick", function (e) {
+                const label = e.point.get("x");
+
+                const positiveCol = document.getElementById("positive-column");
+                const neutralCol  = document.getElementById("neutral-column");
+                const negativeCol = document.getElementById("negative-column");
+
+                [positiveCol, neutralCol, negativeCol].forEach(col =>
+                    col && col.classList.remove("glow")
+                );
+
+                if (label === "POSITIVE") positiveCol?.classList.add("glow");
+                if (label === "NEUTRAL")  neutralCol?.classList.add("glow");
+                if (label === "NEGATIVE") negativeCol?.classList.add("glow");
+            });
+
+            chart.draw();
+        });
+        </script>
+        {% endif %}
+
+        {% if positive %}
+        <div class="tweets-section">
+            <h2 class="section-title">Sentiment Results</h2>
+            <div class="tweets-grid">
+
+                {% for group, title in [(positive,'Positive'),(neutral,'Neutral'),(negative,'Negative'),(removed,'Removed')] %}
+                <div class="tweet-column"
+                id="{% if title == 'Positive' %}positive-column{% elif title == 'Neutral' %}neutral-column{% elif title == 'Negative' %}negative-column{% elif title == 'Removed' %}removed-column{% endif %}">
+
+                    <div class="column-header"><h3>{{ title }}</h3></div>
+                    <div class="tweets-container">
+                        {% for item in group %}
+                        <div class="tweet-card">
+                            <img class="tweet-avatar" 
+                                 src="{{ item.user.profile_image_url or url_for('static', filename='images/default-avatar.png') }}">
+                            <div class="tweet-content">
+                                <h4 class="tweet-name">{{ item.user.name }}</h4>
+                                <p class="tweet-handle">@{{ item.user.screen_name }}</p>
+                                <p class="tweet-text">
+                                    {{ item.full_text }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="email-report-section">
+            <h2 class="section-title">Email Reports</h2>
+            <div class="email-report-card">
+                <p class="report-description">
+                    Automated sentiment reports delivered to your inbox.
+                </p>
+
+                <a href="/reports" class="report-button">
+                    Schedule Email Reports
+                </a>
+            </div>
+        </div>
+
+    </form>
+</body>
+</html>
